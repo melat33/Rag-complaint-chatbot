@@ -49,5 +49,5 @@ LLM_TEMPERATURE = 0.2       # low temperature: we want grounded, consistent anal
 LLM_MAX_TOKENS = 600
 
 # --- Sampling (Task 2 stratified sample) ---
-SAMPLE_SIZE = 12000
+SAMPLE_SIZE = 2000
 RANDOM_SEED = 42
