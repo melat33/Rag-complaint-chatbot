@@ -13,7 +13,7 @@ import logging
 from typing import List, Dict, Optional
 
 from src import config
-from src.embedding import get_chroma_collection
+from src.vector_store import get_chroma_collection
 from src.query_embedding import embed_query
 
 logger = logging.getLogger(__name__)

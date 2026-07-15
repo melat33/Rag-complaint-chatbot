@@ -1,23 +1,28 @@
 """
 Task 2: Embedding + vector store indexing.
 
+Used for OFFLINE bulk indexing only (src/build_index.py, run on your own
+machine) -- loads sentence-transformers/torch locally, which is fine here
+since this never runs on the memory-constrained deployed backend. The
+deployed backend's query-time embedding uses src/query_embedding.py instead
+(calls a hosted API, no torch needed).
+
 We use sentence-transformers/all-MiniLM-L6-v2 because it's the right
 trade-off for this project:
 - 384-dim vectors, ~80MB model -> fast to embed 1M+ chunks on CPU
 - strong performance on semantic similarity benchmarks relative to its size
 - widely supported by both ChromaDB and FAISS, so the pipeline isn't locked in
-
-ChromaDB is used as the vector store because it persists to disk out of the
-box and stores metadata alongside vectors natively (no separate ID-mapping
-file to keep in sync, which you'd need with raw FAISS).
 """
+import os
+os.environ["ANONYMIZED_TELEMETRY"] = "False"
+
 import logging
 from typing import List, Dict
 
-import chromadb
 from sentence_transformers import SentenceTransformer
 
 from src import config
+from src.vector_store import get_chroma_collection  # noqa: F401  (re-exported for backward compatibility)
 
 logger = logging.getLogger(__name__)
 
@@ -30,14 +35,6 @@ def get_embedding_model() -> SentenceTransformer:
         logger.info(f"Loading embedding model: {config.EMBEDDING_MODEL}")
         _model = SentenceTransformer(config.EMBEDDING_MODEL)
     return _model
-
-
-def get_chroma_collection():
-    client = chromadb.PersistentClient(path=config.CHROMA_PERSIST_DIR)
-    return client.get_or_create_collection(
-        name=config.CHROMA_COLLECTION_NAME,
-        metadata={"hnsw:space": "cosine"},
-    )
 
 
 def embed_and_index(chunk_records: List[Dict], batch_size: int = 256) -> None:

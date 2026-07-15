@@ -36,10 +36,6 @@ def embed_query(text: str) -> list[float]:
     response.raise_for_status()
     embedding = response.json()
 
-    # The API can return a nested list (per-token) or already-pooled vector
-    # depending on model tagging; sentence-transformers models are tagged
-    # for sentence-similarity, so this is normally already the pooled
-    # 384-dim sentence embedding.
     if isinstance(embedding[0], list):
         embedding = embedding[0]
     return embedding
