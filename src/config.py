@@ -44,6 +44,7 @@ TOP_K = int(os.getenv("TOP_K", 5))
 
 # --- Generation (Task 3) ---
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+HF_TOKEN = os.getenv("HF_TOKEN")
 LLM_MODEL = os.getenv("LLM_MODEL", "llama-3.3-70b-versatile")
 LLM_TEMPERATURE = 0.2       # low temperature: we want grounded, consistent analyst answers
 LLM_MAX_TOKENS = 600
