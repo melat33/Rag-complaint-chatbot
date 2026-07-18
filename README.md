@@ -50,22 +50,27 @@ limit.
 | ⚡ **Stream** | Feels instant | Server-Sent Events push tokens to the UI as Groq generates them |
 
 ## Architecture
+## Architecture
+
+```
 ┌─────────────┐     HTTP/SSE     ┌──────────────┐     similarity search    ┌─────────────┐
 │   React UI   │ ───────────────▶ │   FastAPI     │ ─────────────────────▶ │  ChromaDB    │
 │  (Vercel)    │ ◀─────────────── │  (Render)     │ ◀───────────────────── │(vector_store)│
 └─────────────┘   answer+sources  └──────┬───────┘      top-k chunks       └─────────────┘
-│
-┌───────────┴────────────┐
-▼                         ▼
-┌─────────────┐          ┌───────────────┐
-│  Groq LLM    │          │ HF Inference   │
-│ Llama 3.3 70B│          │ API (query     │
-│ (generation) │          │ embedding)     │
-└─────────────┘          └───────────────┘
+                                          │
+                              ┌───────────┴────────────┐
+                              ▼                         ▼
+                       ┌─────────────┐          ┌───────────────┐
+                       │  Groq LLM    │          │ HF Inference   │
+                       │ Llama 3.3 70B│          │ API (query     │
+                       │ (generation) │          │ embedding)     │
+                       └─────────────┘          └───────────────┘
+```
+
 Bulk indexing (embedding 35,517+ chunks) runs offline, locally, using
 `sentence-transformers` — the deployed backend never loads that model at all; it
 calls a hosted embedding API for the one short query it needs to embed per question.
-See [Engineering decisions](#engineering-decisions-worth-knowing-about) for why.
+See [Engineering decisions](#engineering-decisions-worth-knowing-about) for why..
 
 ## Tech stack
 
@@ -122,28 +127,32 @@ Mocked LLM/vector store — no network calls or API keys needed.
 </details>
 
 ## Project structure
+## Project structure
+
+```
 rag-complaint-chatbot/
 ├── src/
 │   ├── config.py                single source of truth for paths/hyperparameters
 │   ├── data_processing.py       Task 1: streaming EDA + cleaning
-│   ├── chunking.py               Task 2: stratified sampling + text splitting
-│   ├── embedding.py              Task 2: OFFLINE bulk embedding + indexing (local, torch)
-│   ├── query_embedding.py        Task 3: LIVE query embedding via HF API (deployed backend)
-│   ├── vector_store.py           ChromaDB access, zero heavy ML dependencies
-│   ├── retriever.py              Task 3: similarity search
-│   ├── generator.py              Task 3: Groq LLM calls, sync + streaming
-│   ├── prompt_templates.py       the grounded-only analyst prompt
-│   ├── rag_pipeline.py           orchestrates retriever + generator
-│   ├── build_index.py            CLI: run Task 2 end-to-end
-│   └── run_rag_demo.py           CLI: run Task 3 evaluation end-to-end
-├── backend/                    FastAPI: /health, /ask, /ask/stream
-├── frontend/                    React chat UI, streaming + evidence panel
-├── tests/                       pytest, mocked LLM/vector store
-├── notebooks/                    EDA, chunking experiments, RAG demo + evaluation
-├── evaluation/eval_questions.md       10-question qualitative evaluation
-├── Dockerfile                   deployed backend image (leaner than local dev)
-├── requirements.txt              full local dev deps (torch, sentence-transformers)
-└── requirements-backend.txt       deployed backend deps (no torch)
+│   ├── chunking.py              Task 2: stratified sampling + text splitting
+│   ├── embedding.py             Task 2: OFFLINE bulk embedding + indexing (local, torch)
+│   ├── query_embedding.py       Task 3: LIVE query embedding via HF API (deployed backend)
+│   ├── vector_store.py          ChromaDB access, zero heavy ML dependencies
+│   ├── retriever.py             Task 3: similarity search
+│   ├── generator.py             Task 3: Groq LLM calls, sync + streaming
+│   ├── prompt_templates.py      the grounded-only analyst prompt
+│   ├── rag_pipeline.py          orchestrates retriever + generator
+│   ├── build_index.py           CLI: run Task 2 end-to-end
+│   └── run_rag_demo.py          CLI: run Task 3 evaluation end-to-end
+├── backend/                   FastAPI: /health, /ask, /ask/stream
+├── frontend/                   React chat UI, streaming + evidence panel
+├── tests/                      pytest, mocked LLM/vector store
+├── notebooks/                   EDA, chunking experiments, RAG demo + evaluation
+├── evaluation/eval_questions.md      10-question qualitative evaluation
+├── Dockerfile                  deployed backend image (leaner than local dev)
+├── requirements.txt             full local dev deps (torch, sentence-transformers)
+└── requirements-backend.txt      deployed backend deps (no torch)
+```
 ## Engineering decisions worth knowing about
 
 A few choices in this codebase came from debugging real failures against real
